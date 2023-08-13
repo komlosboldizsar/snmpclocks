@@ -1,0 +1,159 @@
+SNMPclocksV1 DEFINITIONS ::= BEGIN
+
+IMPORTS
+	OBJECT-TYPE, NOTIFICATION-TYPE, Integer32
+		FROM SNMPv2-SMI
+	DisplayString, TruthValue
+		FROM SNMPv2-TC;
+
+komlosboldizsar   OBJECT IDENTIFIER ::= { enterprises 59150 }
+snmpclocks        OBJECT IDENTIFIER ::= { komlosboldizsar 2 }
+ 
+-------------------------
+-- Textual conventions --
+-------------------------
+ 
+Id ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT   "d"
+	STATUS         current
+	DESCRIPTION    ""
+	SYNTAX         INTEGER (1..2147483647)
+	
+ClockModeEnum ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT   "d"
+	STATUS         current
+	DESCRIPTION    ""
+	SYNTAX         INTEGER {
+		time(0),
+		forward(1),
+		backward(2)
+	}
+	
+ClockStateEnum ::= TEXTUAL-CONVENTION
+	DISPLAY-HINT   "d"
+	STATUS         current
+	DESCRIPTION    ""
+	SYNTAX         INTEGER {
+		time(0),
+		stopped(1),
+		running(2)
+	}
+	
+-------------------------
+-- Clocks data ----------
+-------------------------
+
+clockTable OBJECT-TYPE
+	SYNTAX SEQUENCE OF clockEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { snmpclocks 1 }
+	
+clockEntry OBJECT-TYPE
+	SYNTAX clockEntry
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION ""
+	INDEX { clockId }
+	::= { clockTable 1 }
+	
+clockEntry ::= SEQUENCE {
+	clockId
+		INTEGER,
+	clockLabel
+		DisplayString,
+	clockMode
+		ClockModeEnum,
+	clockState
+		ClockStateEnum,
+	clockValueSeconds
+		INTEGER,
+	clockValueHhMm
+		DisplayString,
+	clockValueHhMmSs
+		DisplayString,
+	clockDoStart
+		TruthValue,
+	clockDoStop
+		TruthValue,
+	clockDoReset
+		TruthValue
+}
+	   
+clockId OBJECT-TYPE
+	SYNTAX Id
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 1 }
+
+clockMode OBJECT-TYPE
+	SYNTAX ClockModeEnum
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 2 }
+
+clockState OBJECT-TYPE
+	SYNTAX ClockStateEnum
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 3 }
+
+clockValueSeconds OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 4 }
+
+clockValueHhMm OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 5 }
+	
+clockValueHhMmSs OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 6 }
+
+clockDoStart OBJECT-TYPE
+	SYNTAX TruthValue
+	ACCESS write-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 21 }
+	
+clockDoStop OBJECT-TYPE
+	SYNTAX TruthValue
+	ACCESS write-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 22 }
+	
+clockDoReset OBJECT-TYPE
+	SYNTAX TruthValue
+	ACCESS write-only
+	STATUS mandatory
+	DESCRIPTION ""
+	::= { clockEntry 23 }
+	
+-------------------------
+-- Traps ----------------
+-------------------------
+
+clockTraps OBJECT IDENTIFIER ::= { snmpclocks 2 }	
+
+clockTimeChanged NOTIFICATION-TYPE
+	OBJECTS { clockId, clockValueSeconds, clockValueHhMmSs }
+	STATUS current
+	DESCRIPTION ""
+	::= { clockTraps 1001 }
+	
+END
