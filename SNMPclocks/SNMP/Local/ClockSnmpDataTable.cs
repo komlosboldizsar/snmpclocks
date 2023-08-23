@@ -106,7 +106,7 @@ namespace SNMPclocks.SNMP.Local
                     => _do(data, "stop", () => Model.Stop());
             }
 
-            // .22
+            // .23
             public class DoReset : VariableDataProvider
             {
                 public override ISnmpData Get() => new Integer32(0);

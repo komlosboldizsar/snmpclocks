@@ -17,10 +17,17 @@ namespace SNMPclocks
         static void Main()
         {
             Config config = loadConfig();
-            ObservableList<Clock> clockList = loadAndInitClocks();
+            ObservableList<Clock> clockList = loadAndInitClocks(out ClockListSerializer serializer);
             initSnmp(config, clockList);
             ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm(clockList));
+            Form mainForm = new MainForm(clockList);
+            mainForm.FormClosing += (sender, eventArgs) => serializer.Save();
+            Application.Run(mainForm);
+        }
+
+        private static void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private static Config loadConfig()
@@ -36,10 +43,10 @@ namespace SNMPclocks
             }
         }
 
-        private static ObservableList<Clock> loadAndInitClocks()
+        private static ObservableList<Clock> loadAndInitClocks(out ClockListSerializer serializer)
         {
             ObservableList<Clock> clockList = new();
-            ClockListSerializer serializer = new(PATH_CLOCKS, clockList);
+            serializer = new(PATH_CLOCKS, clockList);
             serializer.Load();
             clockList.Foreach(c => c.Init());
             return clockList;

@@ -10,6 +10,7 @@ namespace SNMPclocks
     {
         Time,
         Up,
-        Down
+        Down,
+        Until
     }
 }

@@ -5,11 +5,13 @@
 
         public static string SecondsToHhMmSs(this int seconds)
         {
-            int hours = seconds / 3600;
-            seconds -= hours * 3600;
-            int minutes = seconds / 60;
-            seconds -= minutes * 60;
-            return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+            int secondsAbs = Math.Abs(seconds);
+            int hours = secondsAbs / 3600;
+            secondsAbs -= hours * 3600;
+            int minutes = secondsAbs / 60;
+            secondsAbs -= minutes * 60;
+            string minus = (seconds < 0) ? "-" : string.Empty;
+            return $"{minus}{hours:D2}:{minutes:D2}:{secondsAbs:D2}";
         }
 
         public static int ToSeconds(this DateTime dt)

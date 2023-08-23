@@ -12,6 +12,7 @@ namespace SNMPclocks
         Reset,
         Stopped,
         Running,
-        Expired
+        Expired,
+        Disabled
     }
 }

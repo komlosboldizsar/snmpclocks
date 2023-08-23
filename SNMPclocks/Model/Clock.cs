@@ -96,20 +96,20 @@ namespace SNMPclocks
         }
         #endregion
 
-        #region Property: StartValue
-        private int _startValue;
+        #region Property: StartValueSeconds, StartValueStringHhMmSs
+        private int _startValueSeconds;
 
         [JsonPropertyName("startValue")]
-        public int StartValue
+        public int StartValueSeconds
         {
-            get => _startValue;
+            get => _startValueSeconds;
             set
             {
-                if (value == _startValue)
+                if (value == _startValueSeconds)
                     return;
-                _startValue = value;
+                _startValueSeconds = value;
+                PropertyChanged?.Invoke(nameof(StartValueSeconds));
                 StartValueStringHhMmSs = value.SecondsToHhMmSs();
-                PropertyChanged?.Invoke(nameof(StartValue));
                 if (_beforeInit || ((State == ClockState.Reset) && (Mode == ClockMode.Down)))
                 {
                     ValueSeconds = value;
@@ -134,10 +134,104 @@ namespace SNMPclocks
         }
         #endregion
 
-        #region Property: ValueSeconds, ValueSecondsWithEditing
-        private int _valueSeconds = -1;
+        #region Property: OffsetSeconds, OffsetStringHhMmSs
+        private int _offsetSeconds;
 
-        public event Action<Clock> TimeChanged;
+        [JsonPropertyName("offset")]
+        public int OffsetSeconds
+        {
+            get => _offsetSeconds;
+            set
+            {
+                if (value == _offsetSeconds)
+                    return;
+                _offsetSeconds = value;
+                PropertyChanged?.Invoke(nameof(OffsetSeconds));
+                OffsetStringHhMmSs = value.SecondsToHhMmSs();
+            }
+        }
+
+        private string _offsetStringHhMmSs = "00:00:00";
+
+        [JsonIgnore]
+        public string OffsetStringHhMmSs
+        {
+            get => _offsetStringHhMmSs;
+            set
+            {
+                if (value == _offsetStringHhMmSs)
+                    return;
+                _offsetStringHhMmSs = value;
+                PropertyChanged?.Invoke(nameof(OffsetStringHhMmSs));
+            }
+        }
+        #endregion
+
+        #region Property: UntilSeconds, UntilStringHhMmSs, UntilTimestamp; method: updateUntilTimestamp
+        private int _untilSeconds;
+
+        [JsonPropertyName("until")]
+        public int UntilSeconds
+        {
+            get => _untilSeconds;
+            set
+            {
+                if (value == _untilSeconds)
+                    return;
+                _untilSeconds = value;
+                PropertyChanged?.Invoke(nameof(UntilSeconds));
+                UntilStringHhMmSs = value.SecondsToHhMmSs();
+                if (!_beforeInit)
+                    updateUntilTimestamp();
+            }
+        }
+
+        private string _untilStringHhMmSs = "00:00:00";
+
+        [JsonIgnore]
+        public string UntilStringHhMmSs
+        {
+            get => _untilStringHhMmSs;
+            set
+            {
+                if (value == _untilStringHhMmSs)
+                    return;
+                _untilStringHhMmSs = value;
+                PropertyChanged?.Invoke(nameof(UntilStringHhMmSs));
+            }
+        }
+
+        private DateTime _untilTimestamp;
+
+        [JsonPropertyName("untilTimestamp")]
+        public long UntilTimestamp // for persistence
+        {
+            get => _untilTimestamp.ToUniversalTime().ToBinary();
+            set
+            {
+                _untilTimestamp = DateTime.FromBinary(value).ToLocalTime();
+                if ((Mode == ClockMode.Until) && (_untilTimestamp <= DateTime.Now))
+                {
+                    ReachedZero = true;
+                    if (!CanBeNegative)
+                        State = ClockState.Expired;
+                }
+            }
+        }
+
+        private void updateUntilTimestamp()
+        {
+            DateTime now = DateTime.Now;
+            DateTime until = now - now.TimeOfDay + new TimeSpan(UntilSeconds * TimeSpan.TicksPerSecond);
+            if (until < now)
+                until += TimeSpan.FromDays(1);
+            _untilTimestamp = until;
+        }
+
+        #endregion
+
+        #region Property: ValueSeconds, ValueStringHhMmSs; event: TimeChanged
+        private int _valueSeconds = -1;
 
         [JsonPropertyName("value")]
         public int ValueSeconds
@@ -149,28 +243,13 @@ namespace SNMPclocks
                     return;
                 _valueSeconds = value;
                 PropertyChanged?.Invoke(nameof(ValueSeconds));
-                PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
-                int valueAbs = (value > 0) ? value : -value;
-                string stringHhMmSs = valueAbs.SecondsToHhMmSs();
-                string minus = (value >= 0) ? "" : "-";
-                ValueStringHhMmSs = minus + stringHhMmSs;
+                ValueStringHhMmSs = value.SecondsToHhMmSs();
                 TimeChanged?.Invoke(this);
+                if (_beforeInit && (Mode == ClockMode.Down))
+                    _inheritedSeconds = value;
             }
         }
 
-        [JsonIgnore]
-        public int ValueSecondsWithEditing
-        {
-            get
-            {
-                if (RemoteEditMode == ClockRemoteEditMode.NotEditing)
-                    return _valueSeconds;
-                return _remoteEditSeconds;
-            }
-        }
-        #endregion
-
-        #region Property: ValueStringHhMmSs, ValueStringHhMmSsWithEditing
         private string _valueStringHhMmSs = "00:00:00";
 
         [JsonIgnore]
@@ -183,23 +262,31 @@ namespace SNMPclocks
                     return;
                 _valueStringHhMmSs = value;
                 PropertyChanged?.Invoke(nameof(ValueStringHhMmSs));
-                PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
             }
         }
 
-        [JsonIgnore]
-        public string ValueStringHhMmSsWithEditing
+        public event Action<Clock> TimeChanged;
+        #endregion
+
+        #region Property: Enabled
+        private bool _enabled = true;
+
+        [JsonPropertyName("enabled")]
+        public bool Enabled
         {
-            get
+            get => _enabled;
+            set
             {
-                
-                return RemoteEditMode switch
+                if (value == _enabled)
+                    return;
+                _enabled = value;
+                PropertyChanged?.Invoke(nameof(Enabled));
+                if (((Mode == ClockMode.Time) || (Mode == ClockMode.Until)) && (value == false))
                 {
-                    ClockRemoteEditMode.NotEditing => _valueStringHhMmSs,
-                    ClockRemoteEditMode.EditingSeconds => $"E {_remoteEditSeconds.SecondsToHhMmSs()}",
-                    ClockRemoteEditMode.EditingHhMmSs => _remoteEditHhMmSsString,
-                    _ => _valueStringHhMmSs
-                };
+                    ValueSeconds = -1;
+                    ValueStringHhMmSs = "XX:XX:XX";
+                    State = ClockState.Disabled;
+                }
             }
         }
         #endregion
@@ -207,6 +294,7 @@ namespace SNMPclocks
         #region Property: CanBeNegative
         private bool _canBeNegative = false;
 
+        [JsonPropertyName("canBeNegative")]
         public bool CanBeNegative
         {
             get => _canBeNegative;
@@ -216,6 +304,8 @@ namespace SNMPclocks
                     return;
                 _canBeNegative = value;
                 PropertyChanged?.Invoke(nameof(CanBeNegative));
+                if (value && (State == ClockState.Expired))
+                    State = ClockState.Running;
             }
         }
         #endregion
@@ -223,6 +313,7 @@ namespace SNMPclocks
         #region Property: BelowZero
         private bool _reachedZero = false;
 
+        [JsonIgnore]
         public bool ReachedZero
         {
             get => _reachedZero;
@@ -248,7 +339,6 @@ namespace SNMPclocks
                     return;
                 _canShowEditing = value;
                 PropertyChanged?.Invoke(nameof(ValueStringHhMmSs));
-                PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
             }
         }
 
@@ -259,6 +349,7 @@ namespace SNMPclocks
         #region Property: RemoteEditMode
         private ClockRemoteEditMode _remoteEditMode = ClockRemoteEditMode.NotEditing;
 
+        [JsonIgnore]
         public ClockRemoteEditMode RemoteEditMode
         {
             get => _remoteEditMode;
@@ -270,8 +361,8 @@ namespace SNMPclocks
                 PropertyChanged?.Invoke(nameof(RemoteEditMode));
                 if (CanShowEditing)
                 {
-                    PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
-                    PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
+                    //PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
+                    //PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
                 }
             }
         }
@@ -299,7 +390,7 @@ namespace SNMPclocks
         {
             if (RemoteEditMode == ClockRemoteEditMode.NotEditing)
                 throw new InvalidOperationException();
-            StartValue = _remoteEditSeconds;
+            StartValueSeconds = _remoteEditSeconds;
             RemoteEditMode = ClockRemoteEditMode.NotEditing;
         }
 
@@ -322,8 +413,7 @@ namespace SNMPclocks
                 _remoteEditSeconds += digit;
                 if (CanShowEditing)
                 {
-                    PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
-                    PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
+                    // TODO
                 }
             }
             else if (RemoteEditMode == ClockRemoteEditMode.EditingHhMmSs)
@@ -355,8 +445,8 @@ namespace SNMPclocks
                 }
                 else if (CanShowEditing)
                 {
-                    PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
-                    PropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
+                    //PropertyChanged?.Invoke(nameof(ValueSecondsWithEditing));
+                    //ropertyChanged?.Invoke(nameof(ValueStringHhMmSsWithEditing));
                 }
             }
 
@@ -389,23 +479,46 @@ namespace SNMPclocks
             if (Mode == ClockMode.Time)
                 throw new InvalidOperationException("'Reset' operation cannot be executed on a clock with 'time' mode.");
             setStartedAt();
-            int newValue = (Mode == ClockMode.Down) ? StartValue : 0;
-            _inheritedSeconds = newValue;
-            ValueSeconds = newValue;
+            if (Mode == ClockMode.Down)
+            {
+                _inheritedSeconds = StartValueSeconds;
+                ValueSeconds = StartValueSeconds;
+            }
+            else if (Mode == ClockMode.Up)
+            {
+                _inheritedSeconds = 0;
+                ValueSeconds = 0;
+            }
+            if (!_beforeInit)
+                updateUntilTimestamp();
             ReachedZero = false;
-            if ((State == ClockState.Stopped) || (State == ClockState.Expired))
+            if (((State == ClockState.Stopped) || (State == ClockState.Expired)) && (Mode != ClockMode.Until))
+            {
                 State = ClockState.Reset;
+            }
+            else if (Mode == ClockMode.Until)
+            {
+                State = ClockState.Running;
+                calcValueUntil();
+            }
         }
         #endregion
-
+        
         #region Timing
         private void tick()
         {
-
             DateTime now = DateTime.Now;
             if (Mode == ClockMode.Time)
             {
-                ValueSeconds = now.ToSeconds();
+                if (Enabled)
+                {
+                    ValueSeconds = now.ToSeconds() + OffsetSeconds;
+                    State = ClockState.Time;
+                }
+            }
+            else if (Mode == ClockMode.Until)
+            {
+                calcValueUntil();
             }
             else if (State == ClockState.Running)
             {
@@ -427,6 +540,28 @@ namespace SNMPclocks
                         if (!CanBeNegative)
                             State = ClockState.Expired;
                     }
+                }
+            }
+        }
+
+        private void calcValueUntil()
+        {
+            if (Enabled)
+            {
+                DateTime now = DateTime.Now;
+                TimeSpan diff = _untilTimestamp - now;
+                int seconds = (int)diff.TotalSeconds;
+                if (!CanBeNegative && (seconds < 0))
+                    seconds = 0;
+                ValueSeconds = seconds;
+                if (seconds <= 0)
+                {
+                    ReachedZero = true;
+                    State = CanBeNegative ? ClockState.Running : ClockState.Expired;
+                }
+                else
+                {
+                    State = ClockState.Running;
                 }
             }
         }
@@ -476,6 +611,10 @@ namespace SNMPclocks
         public void RaisePropertyChanged(string propertyName) => PropertyChanged?.Invoke(propertyName);
         #endregion
 
+        internal void Removed()
+        {
+            // TODO
+        }
 
     }
 }
