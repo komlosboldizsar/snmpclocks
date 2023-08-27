@@ -64,9 +64,9 @@ namespace SNMPclocks
             TrapSendingConfig trapSendingConfig = new();
             foreach (Config.TrapReceiver trapReceiver in config.TrapReceivers)
                 trapSendingConfig.AddReceiver(trapReceiver.IP, trapReceiver.Port, convertTrapReceiverVersion(trapReceiver.Version), trapReceiver.Community, trapReceiver.Filter, trapReceiver.SendMyIP);
-            SnmpAgent snmpAgent = new(config.Port, config.CommunityRead, config.CommunityWrite);
+            SnmpAgent snmpAgent = new(config.Port, config.CommunityRead, config.CommunityWrite, trapSendingConfig);
             snmpAgent.Start();
-            _ = new DataTableBoundObjectStoreAdapter<Clock, ClockSnmpDataTable>(snmpAgent.ObjectStore, clockList, trapSendingConfig);
+            _ = new DataTableBoundObjectStoreAdapter<Clock, ClockSnmpDataTable>(snmpAgent, clockList);
         }
 
     }

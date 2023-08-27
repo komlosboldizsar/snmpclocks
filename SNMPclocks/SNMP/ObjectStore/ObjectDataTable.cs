@@ -8,7 +8,7 @@ namespace SNMPclocks.SNMP
     {
 
         public TModel Model { get; private set; }
-        public TrapSendingConfig TrapSendingConfig { get; private set; }
+        public SnmpAgent SnmpAgent { get; private set; }
         protected readonly List<ScalarObject> _objects = new();
         protected override IEnumerable<ScalarObject> Objects => _objects;
         private readonly List<TrapGenerator> _trapGenerators = new();
@@ -16,10 +16,10 @@ namespace SNMPclocks.SNMP
         internal Dictionary<IVariableFactory, UniversalScalarObject> VariableFactoryProducts { get; private set; } = new();
         internal UniversalScalarObject IndexerVariableFactoryProduct { get; private set; } = null;
 
-        public void Init(TModel model, TrapSendingConfig trapSendingConfig)
+        public void Init(TModel model, SnmpAgent snmpAgent)
         {
             Model = model;
-            TrapSendingConfig = trapSendingConfig;
+            SnmpAgent = snmpAgent;
             foreach (IVariableFactory variableFactory in VariableFactories)
             {
                 UniversalScalarObject variable = variableFactory.CreateVariable(this);
@@ -130,7 +130,7 @@ namespace SNMPclocks.SNMP
                     payloadVariables.Add(withoutIndex ? payloadObject.VariableWithoutIndexer : payloadObject.Variable);
                     withoutIndex = VariablesWithoutIndex;
                 }
-                Table.TrapSendingConfig.SendAll(Code, _enterprise, payloadVariables);
+                Table.SnmpAgent.SendTraps(Code, _enterprise, payloadVariables);
             }
 
         }

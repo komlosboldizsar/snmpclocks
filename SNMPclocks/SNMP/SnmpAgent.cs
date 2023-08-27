@@ -12,15 +12,17 @@ namespace SNMPclocks.SNMP
         private readonly int _port;
         private readonly string _communityRead;
         private readonly string _communityWrite;
+        public readonly TrapSendingConfig TrapSendingConfig;
 
         public readonly MyObjectStore ObjectStore = new();
         private SnmpEngine _engine;
 
-        public SnmpAgent(int port, string communityRead, string communityWrite)
+        public SnmpAgent(int port, string communityRead, string communityWrite, TrapSendingConfig trapSendingConfig)
         {
             _port = port;
             _communityRead = communityRead;
             _communityWrite = communityWrite;
+            TrapSendingConfig = trapSendingConfig;
             createEngine();
         }
 
@@ -60,6 +62,9 @@ namespace SNMPclocks.SNMP
                 //LogDispatcher.E($"Couldn't start SNMP service at UDP port {_port}, because IP endpoint is in use by another application.");
             }
         }
+
+        public void SendTraps(string code, TrapEnterprise enterprise, IList<Variable> variables)
+            => TrapSendingConfig.SendAll(code, enterprise, variables);
 
         private class MyLogger : ILogger
         {

@@ -1,4 +1,5 @@
 ﻿using BToolbox.Model;
+using Lextm.SharpSnmpLib.Pipeline;
 
 namespace SNMPclocks.SNMP
 {
@@ -7,15 +8,15 @@ namespace SNMPclocks.SNMP
         where TTable : ObjectDataTable<TModel>, new()
     {
 
-        private MyObjectStore _objectStore;
+        private SnmpAgent _snmpAgent;
         private readonly IObservableList<TModel> _objectList;
-        private TrapSendingConfig _trapSendingConfig;
+        private MyObjectStore _objectStore;
 
-        public DataTableBoundObjectStoreAdapter(MyObjectStore objectStore, ObservableList<TModel> objectList, TrapSendingConfig trapSendingConfig)
+        public DataTableBoundObjectStoreAdapter(SnmpAgent snmpAgent, ObservableList<TModel> objectList, MyObjectStore objectStore = null)
         {
-            _objectStore = objectStore;
+            _snmpAgent = snmpAgent;
             _objectList = objectList;
-            _trapSendingConfig = trapSendingConfig;
+            _objectStore = objectStore ?? snmpAgent.ObjectStore;
             foreach (TModel model in _objectList)
                 addRow(model);
             objectList.ItemsAdded += itemsAddedHandler;
@@ -26,7 +27,7 @@ namespace SNMPclocks.SNMP
         private void addRow(TModel model)
         {
             TTable newTableObject = new();
-            newTableObject.Init(model, _trapSendingConfig);
+            newTableObject.Init(model, _snmpAgent);
             _objectStore.Add(newTableObject);
             rowTableAssociations.Add(model, newTableObject);
         }
