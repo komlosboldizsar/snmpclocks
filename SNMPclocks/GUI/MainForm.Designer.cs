@@ -31,6 +31,8 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             statusStrip = new StatusStrip();
+            snmpStatusToolStripStatusLabel = new ToolStripStatusLabel();
+            tryRestartSnmpAgentToolStripStatusLabel = new ToolStripStatusLabel();
             trayIcon = new NotifyIcon(components);
             clockTable = new DataGridView();
             editClockPanel = new Panel();
@@ -64,6 +66,7 @@
             addNewClockButton = new Button();
             clockTablePanel = new Panel();
             addNewClockPanel = new Panel();
+            statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)clockTable).BeginInit();
             editClockPanel.SuspendLayout();
             editClockTable.SuspendLayout();
@@ -76,11 +79,26 @@
             // statusStrip
             // 
             statusStrip.ImageScalingSize = new Size(20, 20);
-            statusStrip.Location = new Point(0, 531);
+            statusStrip.Items.AddRange(new ToolStripItem[] { snmpStatusToolStripStatusLabel, tryRestartSnmpAgentToolStripStatusLabel });
+            statusStrip.Location = new Point(0, 527);
             statusStrip.Name = "statusStrip";
-            statusStrip.Size = new Size(1182, 22);
+            statusStrip.Size = new Size(1182, 26);
             statusStrip.TabIndex = 0;
             statusStrip.Text = "statusStrip1";
+            // 
+            // snmpStatusStripStatusLabel
+            // 
+            snmpStatusToolStripStatusLabel.Name = "snmpStatusStripStatusLabel";
+            snmpStatusToolStripStatusLabel.Size = new Size(414, 20);
+            snmpStatusToolStripStatusLabel.Text = "SNMP agent started at port 161, sending traps for 3 receivers.";
+            // 
+            // tryRestartSnmpAgentToolStripStatusLabel
+            // 
+            tryRestartSnmpAgentToolStripStatusLabel.IsLink = true;
+            tryRestartSnmpAgentToolStripStatusLabel.Name = "tryRestartSnmpAgentToolStripStatusLabel";
+            tryRestartSnmpAgentToolStripStatusLabel.Size = new Size(72, 20);
+            tryRestartSnmpAgentToolStripStatusLabel.Text = "try restart";
+            tryRestartSnmpAgentToolStripStatusLabel.Click += tryRestartSnmpAgentToolStripStatusLabel_Click;
             // 
             // trayIcon
             // 
@@ -100,7 +118,7 @@
             clockTable.ReadOnly = true;
             clockTable.RowHeadersWidth = 51;
             clockTable.RowTemplate.Height = 29;
-            clockTable.Size = new Size(1182, 260);
+            clockTable.Size = new Size(1182, 256);
             clockTable.TabIndex = 1;
             // 
             // editClockPanel
@@ -108,7 +126,7 @@
             editClockPanel.AutoSize = true;
             editClockPanel.Controls.Add(editClockTable);
             editClockPanel.Dock = DockStyle.Bottom;
-            editClockPanel.Location = new Point(0, 305);
+            editClockPanel.Location = new Point(0, 301);
             editClockPanel.Name = "editClockPanel";
             editClockPanel.Padding = new Padding(5);
             editClockPanel.Size = new Size(1182, 226);
@@ -490,7 +508,7 @@
             clockTablePanel.Dock = DockStyle.Fill;
             clockTablePanel.Location = new Point(0, 0);
             clockTablePanel.Name = "clockTablePanel";
-            clockTablePanel.Size = new Size(1182, 260);
+            clockTablePanel.Size = new Size(1182, 256);
             clockTablePanel.TabIndex = 0;
             // 
             // addNewClockPanel
@@ -498,7 +516,7 @@
             addNewClockPanel.AutoSize = true;
             addNewClockPanel.Controls.Add(addNewClockButton);
             addNewClockPanel.Dock = DockStyle.Bottom;
-            addNewClockPanel.Location = new Point(0, 260);
+            addNewClockPanel.Location = new Point(0, 256);
             addNewClockPanel.Name = "addNewClockPanel";
             addNewClockPanel.Padding = new Padding(0, 5, 0, 5);
             addNewClockPanel.Size = new Size(1182, 45);
@@ -518,6 +536,8 @@
             Name = "MainForm";
             Text = "SNMPclocks";
             Load += MainForm_Load;
+            statusStrip.ResumeLayout(false);
+            statusStrip.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)clockTable).EndInit();
             editClockPanel.ResumeLayout(false);
             editClockPanel.PerformLayout();
@@ -571,5 +591,7 @@
         private DateTimePicker clockStartValueDateTimePicker;
         private DateTimePicker clockUntilDateTimePicker;
         private Button clockOffsetNegativeButton;
+        private ToolStripStatusLabel snmpStatusToolStripStatusLabel;
+        private ToolStripStatusLabel tryRestartSnmpAgentToolStripStatusLabel;
     }
 }

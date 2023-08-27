@@ -16,6 +16,7 @@ namespace SNMPclocks.SNMP
 
         private DateTime _baseTime;
         private List<TrapReceiver> _receivers = new();
+        public int ReceiverCount => _receivers.Count;
 
         public TrapSendingConfig(DateTime? baseTime = null)
         {

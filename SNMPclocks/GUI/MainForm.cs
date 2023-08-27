@@ -2,6 +2,7 @@ using BToolbox.GUI.Helpers.Converters;
 using BToolbox.GUI.Tables;
 using BToolbox.Model;
 using SNMPclocks.Model;
+using SNMPclocks.SNMP;
 using System.Data;
 using System.Drawing.Text;
 using System.Windows.Forms;
@@ -11,17 +12,53 @@ namespace SNMPclocks.GUI
     public partial class MainForm : Form
     {
 
-        public MainForm() : this(new()) { }
+        public MainForm() : this(new(), null) { }
 
-        public MainForm(ObservableList<Clock> clockList)
+        public MainForm(ObservableList<Clock> clockList, SnmpAgent snmpAgent)
         {
             _clockList = clockList;
+            _snmpAgent = snmpAgent;
             InitializeComponent();
             initDataGridView();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
-            => endEditingClock();
+        {
+            if (_snmpAgent != null)
+                _snmpAgent.StatusChanged += snmpAgentStatusChangedHandler;
+            displaySnmpAgentStatus();
+            endEditingClock();
+        }
+
+        #region SNMP agent status
+        private SnmpAgent _snmpAgent;
+
+        private void displaySnmpAgentStatus()
+        {
+            if (_snmpAgent == null)
+                return;
+            if (_snmpAgent.Started)
+            {
+                int receiverCount = _snmpAgent.TrapSendingConfig.ReceiverCount;
+                string receiverPlural = (receiverCount == 1) ? "s" : string.Empty;
+                snmpStatusToolStripStatusLabel.Text = $"SNMP agent started at port {_snmpAgent.Port}, sending traps for {receiverCount} receiver{receiverPlural}.";
+                snmpStatusToolStripStatusLabel.ForeColor = SystemColors.WindowText;
+                tryRestartSnmpAgentToolStripStatusLabel.Visible = false;
+            }
+            else
+            {
+                snmpStatusToolStripStatusLabel.Text = "SNMP agent not started.";
+                snmpStatusToolStripStatusLabel.ForeColor = Color.Red;
+                tryRestartSnmpAgentToolStripStatusLabel.Visible = true;
+            }
+        }
+
+        private void snmpAgentStatusChangedHandler(bool started, Exception startException)
+            => displaySnmpAgentStatus();
+
+        private void tryRestartSnmpAgentToolStripStatusLabel_Click(object sender, EventArgs e)
+            => _snmpAgent.Start();
+        #endregion
 
         #region Table
         private ObservableList<Clock> _clockList;
@@ -431,6 +468,5 @@ namespace SNMPclocks.GUI
             label.Text = $"= {negativeSign}{seconds} seconds";
         }
         #endregion
-
     }
 }

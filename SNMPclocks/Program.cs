@@ -18,9 +18,9 @@ namespace SNMPclocks
         {
             Config config = loadConfig();
             ObservableList<Clock> clockList = loadAndInitClocks(out ClockListSerializer serializer);
-            initSnmp(config, clockList);
+            SnmpAgent snmpAgent = initSnmp(config, clockList);
             ApplicationConfiguration.Initialize();
-            Form mainForm = new MainForm(clockList);
+            Form mainForm = new MainForm(clockList, snmpAgent);
             mainForm.FormClosing += (sender, eventArgs) => serializer.Save();
             Application.Run(mainForm);
         }
@@ -52,9 +52,9 @@ namespace SNMPclocks
             return clockList;
         }
 
-        private static void initSnmp(Config config, ObservableList<Clock> clockList)
+        private static SnmpAgent initSnmp(Config config, ObservableList<Clock> clockList)
         {
-            Func< Config.TrapReceiverVersion, TrapSendingConfig.TrapReceiverVersion> convertTrapReceiverVersion = (version)
+            Func<Config.TrapReceiverVersion, TrapSendingConfig.TrapReceiverVersion> convertTrapReceiverVersion = (version)
                 => version switch
                 {
                     Config.TrapReceiverVersion.V1 => TrapSendingConfig.TrapReceiverVersion.V1,
@@ -67,6 +67,7 @@ namespace SNMPclocks
             SnmpAgent snmpAgent = new(config.Port, config.CommunityRead, config.CommunityWrite, trapSendingConfig);
             snmpAgent.Start();
             _ = new DataTableBoundObjectStoreAdapter<Clock, ClockSnmpDataTable>(snmpAgent, clockList);
+            return snmpAgent;
         }
 
     }

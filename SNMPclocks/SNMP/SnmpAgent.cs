@@ -9,7 +9,7 @@ namespace SNMPclocks.SNMP
     public class SnmpAgent
     {
 
-        private readonly int _port;
+        public readonly int Port;
         private readonly string _communityRead;
         private readonly string _communityWrite;
         public readonly TrapSendingConfig TrapSendingConfig;
@@ -17,9 +17,15 @@ namespace SNMPclocks.SNMP
         public readonly MyObjectStore ObjectStore = new();
         private SnmpEngine _engine;
 
+        public bool Started { get; private set; } = false;
+        public Exception StartException { get; private set; } = null;
+
+        public delegate void StatusChangedDelegate(bool started, Exception startException);
+        public event StatusChangedDelegate StatusChanged;
+
         public SnmpAgent(int port, string communityRead, string communityWrite, TrapSendingConfig trapSendingConfig)
         {
-            _port = port;
+            Port = port;
             _communityRead = communityRead;
             _communityWrite = communityWrite;
             TrapSendingConfig = trapSendingConfig;
@@ -50,21 +56,32 @@ namespace SNMPclocks.SNMP
 
         public void Start()
         {
+            if (Started)
+                return;
             try
             {
                 _engine.Listener.ClearBindings();
                 if (Socket.OSSupportsIPv4)
-                    _engine.Listener.AddBinding(new IPEndPoint(IPAddress.Any, _port));
+                    _engine.Listener.AddBinding(new IPEndPoint(IPAddress.Any, Port));
                 _engine.Start();
+                statusChanged(true, null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //LogDispatcher.E($"Couldn't start SNMP service at UDP port {_port}, because IP endpoint is in use by another application.");
+                statusChanged(false, ex);
             }
         }
 
         public void SendTraps(string code, TrapEnterprise enterprise, IList<Variable> variables)
             => TrapSendingConfig.SendAll(code, enterprise, variables);
+
+        private void statusChanged(bool started, Exception startException)
+        {
+            Started = started;
+            StartException = startException;
+            StatusChanged?.Invoke(started, startException);
+        }
 
         private class MyLogger : ILogger
         {
