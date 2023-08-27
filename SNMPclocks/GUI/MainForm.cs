@@ -60,6 +60,11 @@ namespace SNMPclocks.GUI
             => _snmpAgent.Start();
         #endregion
 
+        #region About window
+        private void aboutToolStripStatusLabel_Click(object sender, EventArgs e)
+            => (new AboutForm()).ShowDialog();
+        #endregion
+
         #region Table
         private ObservableList<Clock> _clockList;
         private CustomDataGridView<Clock> _table;
@@ -473,6 +478,7 @@ namespace SNMPclocks.GUI
         public delegate void ClockEditedDelegate(Clock clock);
         public event ClockEditedDelegate ClockEdited;
         #endregion
+
 
     }
 }

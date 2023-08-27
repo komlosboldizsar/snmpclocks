@@ -66,6 +66,8 @@
             addNewClockButton = new Button();
             clockTablePanel = new Panel();
             addNewClockPanel = new Panel();
+            aboutToolStripStatusLabel = new ToolStripStatusLabel();
+            spacerSpringtoolStripStatusLabel = new ToolStripStatusLabel();
             statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)clockTable).BeginInit();
             editClockPanel.SuspendLayout();
@@ -79,16 +81,16 @@
             // statusStrip
             // 
             statusStrip.ImageScalingSize = new Size(20, 20);
-            statusStrip.Items.AddRange(new ToolStripItem[] { snmpStatusToolStripStatusLabel, tryRestartSnmpAgentToolStripStatusLabel });
+            statusStrip.Items.AddRange(new ToolStripItem[] { snmpStatusToolStripStatusLabel, tryRestartSnmpAgentToolStripStatusLabel, spacerSpringtoolStripStatusLabel, aboutToolStripStatusLabel });
             statusStrip.Location = new Point(0, 527);
             statusStrip.Name = "statusStrip";
             statusStrip.Size = new Size(1182, 26);
             statusStrip.TabIndex = 0;
             statusStrip.Text = "statusStrip1";
             // 
-            // snmpStatusStripStatusLabel
+            // snmpStatusToolStripStatusLabel
             // 
-            snmpStatusToolStripStatusLabel.Name = "snmpStatusStripStatusLabel";
+            snmpStatusToolStripStatusLabel.Name = "snmpStatusToolStripStatusLabel";
             snmpStatusToolStripStatusLabel.Size = new Size(414, 20);
             snmpStatusToolStripStatusLabel.Text = "SNMP agent started at port 161, sending traps for 3 receivers.";
             // 
@@ -522,6 +524,20 @@
             addNewClockPanel.Size = new Size(1182, 45);
             addNewClockPanel.TabIndex = 20;
             // 
+            // aboutToolStripStatusLabel
+            // 
+            aboutToolStripStatusLabel.IsLink = true;
+            aboutToolStripStatusLabel.Name = "aboutToolStripStatusLabel";
+            aboutToolStripStatusLabel.Size = new Size(48, 20);
+            aboutToolStripStatusLabel.Text = "about";
+            aboutToolStripStatusLabel.Click += aboutToolStripStatusLabel_Click;
+            // 
+            // spacerSpringtoolStripStatusLabel
+            // 
+            spacerSpringtoolStripStatusLabel.Name = "spacerSpringtoolStripStatusLabel";
+            spacerSpringtoolStripStatusLabel.Size = new Size(594, 20);
+            spacerSpringtoolStripStatusLabel.Spring = true;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(120F, 120F);
@@ -593,5 +609,7 @@
         private Button clockOffsetNegativeButton;
         private ToolStripStatusLabel snmpStatusToolStripStatusLabel;
         private ToolStripStatusLabel tryRestartSnmpAgentToolStripStatusLabel;
+        private ToolStripStatusLabel spacerSpringtoolStripStatusLabel;
+        private ToolStripStatusLabel aboutToolStripStatusLabel;
     }
 }
