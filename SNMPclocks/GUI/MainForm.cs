@@ -390,6 +390,8 @@ namespace SNMPclocks.GUI
             if (addingNew)
                 _clockList.Add(clock);
             endEditingClock();
+            if (!addingNew)
+                ClockEdited?.Invoke(clock);
         }
 
         private void editClockCancelButton_Click(object sender, EventArgs e)
@@ -467,6 +469,10 @@ namespace SNMPclocks.GUI
             string negativeSign = (negative && (seconds > 0)) ? "-" : string.Empty;
             label.Text = $"= {negativeSign}{seconds} seconds";
         }
+
+        public delegate void ClockEditedDelegate(Clock clock);
+        public event ClockEditedDelegate ClockEdited;
         #endregion
+
     }
 }

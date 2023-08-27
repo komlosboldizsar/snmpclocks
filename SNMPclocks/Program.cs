@@ -18,16 +18,16 @@ namespace SNMPclocks
         {
             Config config = loadConfig();
             ObservableList<Clock> clockList = loadAndInitClocks(out ClockListSerializer serializer);
+            ObservableEnumerableItemsChangedDelegate<Clock> clockAddedOrRemovedHandler =
+                (iwp) => serializer.Save();
+            clockList.ItemsAdded += clockAddedOrRemovedHandler;
+            clockList.ItemsRemoved += clockAddedOrRemovedHandler;
             SnmpAgent snmpAgent = initSnmp(config, clockList);
             ApplicationConfiguration.Initialize();
-            Form mainForm = new MainForm(clockList, snmpAgent);
+            MainForm mainForm = new(clockList, snmpAgent);
+            mainForm.ClockEdited += (c) => serializer.Save();
             mainForm.FormClosing += (sender, eventArgs) => serializer.Save();
             Application.Run(mainForm);
-        }
-
-        private static void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         private static Config loadConfig()
