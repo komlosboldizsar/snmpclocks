@@ -40,7 +40,7 @@ namespace SNMPclocks.GUI
             if (_snmpAgent.Started)
             {
                 int receiverCount = _snmpAgent.TrapSendingConfig.ReceiverCount;
-                string receiverPlural = (receiverCount == 1) ? "s" : string.Empty;
+                string receiverPlural = (receiverCount != 1) ? "s" : string.Empty;
                 snmpStatusToolStripStatusLabel.Text = $"SNMP agent started at port {_snmpAgent.Port}, sending traps for {receiverCount} receiver{receiverPlural}.";
                 snmpStatusToolStripStatusLabel.ForeColor = SystemColors.WindowText;
                 tryRestartSnmpAgentToolStripStatusLabel.Visible = false;
